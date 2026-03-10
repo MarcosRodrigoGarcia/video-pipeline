@@ -1,0 +1,273 @@
+{
+  "language": "es",
+  "language_probability": 0.99,
+  "duration_seconds": 81.6,
+  "processing_time_seconds": 15.0,
+  "full_text": "Simplemente para quitárselo de encima. Y está la tía literalmente descojonándose. Descojonándose. Y ahí insultándole. ¡Botox killes! ¡Botox killes! Y llora, Carol, pero luego cuando le preguntan cuando tiene que hacer el paripé, ahí llora. Y ahora pues nada, a seguir normalizando que tengo que tomar pastillas para dormir, que tengo que tener miedo en mi casa, que no puedo hacer un acto público. A seguir normalizando todas estas cosas hasta que alguien haga. ¡Déjame probar tus lágrimas! ¡Son dulces y tibias! Increíble. Increíble, ¿vale? Las 20 diferencias. Cuando está denunciando el terror psicológico que siente por su agresor, cuando se encuentra a su agresor. ¡Botox killes! ...que pedía Sara Santolera contra mí y sinceramente, de ser cierta, lo comprobaré, yo creo que sí. Me parece que es una gran noticia y me parece sobre todo que es, de alguna forma, la manera en la que se ha puesto pie en parés frente a esta chaladura. Frente a esta chaladura, como digo, porque han venido aquí muchos tertulianos, activistas de izquierda, ministros del gobierno, políticos, cargos del Partido Socialista, presentadores de televisión, a dar voz a la denunciante falsa, a la que me ha puesto una denuncia falsa, inventándose una agresión y solidarizándose con ella. Y la ha hecho Bolaños, y lo ha hecho Irene Montero, y la ha hecho todo el mundo de la izquierda, y ahora resulta que...",
+  "segments": [
+    {
+      "id": 1,
+      "start": 0.44,
+      "end": 2.04,
+      "text": "Simplemente para quitárselo de encima."
+    },
+    {
+      "id": 2,
+      "start": 2.44,
+      "end": 4.28,
+      "text": "Y está la tía literalmente descojonándose."
+    },
+    {
+      "id": 3,
+      "start": 5.32,
+      "end": 5.8,
+      "text": "Descojonándose."
+    },
+    {
+      "id": 4,
+      "start": 6.14,
+      "end": 7.0,
+      "text": "Y ahí insultándole."
+    },
+    {
+      "id": 5,
+      "start": 7.62,
+      "end": 8.64,
+      "text": "¡Botox killes!"
+    },
+    {
+      "id": 6,
+      "start": 8.96,
+      "end": 9.9,
+      "text": "¡Botox killes!"
+    },
+    {
+      "id": 7,
+      "start": 9.98,
+      "end": 11.96,
+      "text": "Y llora, Carol, pero luego cuando le preguntan"
+    },
+    {
+      "id": 8,
+      "start": 11.96,
+      "end": 13.36,
+      "text": "cuando tiene que hacer el paripé, ahí llora."
+    },
+    {
+      "id": 9,
+      "start": 13.58,
+      "end": 15.98,
+      "text": "Y ahora pues nada, a seguir normalizando"
+    },
+    {
+      "id": 10,
+      "start": 15.98,
+      "end": 18.04,
+      "text": "que tengo que tomar pastillas para dormir,"
+    },
+    {
+      "id": 11,
+      "start": 18.3,
+      "end": 19.82,
+      "text": "que tengo que tener miedo en mi casa,"
+    },
+    {
+      "id": 12,
+      "start": 20.18,
+      "end": 21.76,
+      "text": "que no puedo hacer un acto público."
+    },
+    {
+      "id": 13,
+      "start": 22.44,
+      "end": 24.78,
+      "text": "A seguir normalizando todas estas cosas"
+    },
+    {
+      "id": 14,
+      "start": 24.78,
+      "end": 26.42,
+      "text": "hasta que alguien haga."
+    },
+    {
+      "id": 15,
+      "start": 27.22,
+      "end": 28.68,
+      "text": "¡Déjame probar tus lágrimas!"
+    },
+    {
+      "id": 16,
+      "start": 30.0,
+      "end": 31.56,
+      "text": "¡Son dulces y tibias!"
+    },
+    {
+      "id": 17,
+      "start": 31.76,
+      "end": 32.28,
+      "text": "Increíble."
+    },
+    {
+      "id": 18,
+      "start": 33.14,
+      "end": 34.12,
+      "text": "Increíble, ¿vale?"
+    },
+    {
+      "id": 19,
+      "start": 34.46,
+      "end": 36.4,
+      "text": "Las 20 diferencias."
+    },
+    {
+      "id": 20,
+      "start": 36.96,
+      "end": 39.26,
+      "text": "Cuando está denunciando el terror psicológico"
+    },
+    {
+      "id": 21,
+      "start": 39.26,
+      "end": 40.32,
+      "text": "que siente por su agresor,"
+    },
+    {
+      "id": 22,
+      "start": 40.42,
+      "end": 41.78,
+      "text": "cuando se encuentra a su agresor."
+    },
+    {
+      "id": 23,
+      "start": 42.82,
+      "end": 44.38,
+      "text": "¡Botox killes!"
+    },
+    {
+      "id": 24,
+      "start": 44.78,
+      "end": 46.58,
+      "text": "...que pedía Sara Santolera contra mí"
+    },
+    {
+      "id": 25,
+      "start": 46.58,
+      "end": 49.18,
+      "text": "y sinceramente, de ser cierta,"
+    },
+    {
+      "id": 26,
+      "start": 49.22,
+      "end": 50.08,
+      "text": "lo comprobaré, yo creo que sí."
+    },
+    {
+      "id": 27,
+      "start": 50.62,
+      "end": 52.06,
+      "text": "Me parece que es una gran noticia"
+    },
+    {
+      "id": 28,
+      "start": 52.06,
+      "end": 54.52,
+      "text": "y me parece sobre todo que es, de alguna forma,"
+    },
+    {
+      "id": 29,
+      "start": 54.86,
+      "end": 57.3,
+      "text": "la manera en la que se ha puesto pie en parés"
+    },
+    {
+      "id": 30,
+      "start": 57.3,
+      "end": 58.2,
+      "text": "frente a esta chaladura."
+    },
+    {
+      "id": 31,
+      "start": 58.2,
+      "end": 60.42,
+      "text": "Frente a esta chaladura, como digo,"
+    },
+    {
+      "id": 32,
+      "start": 60.5,
+      "end": 62.98,
+      "text": "porque han venido aquí muchos tertulianos,"
+    },
+    {
+      "id": 33,
+      "start": 63.08,
+      "end": 64.02,
+      "text": "activistas de izquierda,"
+    },
+    {
+      "id": 34,
+      "start": 64.12,
+      "end": 65.14,
+      "text": "ministros del gobierno,"
+    },
+    {
+      "id": 35,
+      "start": 65.66,
+      "end": 67.7,
+      "text": "políticos, cargos del Partido Socialista,"
+    },
+    {
+      "id": 36,
+      "start": 68.1,
+      "end": 69.06,
+      "text": "presentadores de televisión,"
+    },
+    {
+      "id": 37,
+      "start": 69.5,
+      "end": 71.78,
+      "text": "a dar voz a la denunciante falsa,"
+    },
+    {
+      "id": 38,
+      "start": 72.14,
+      "end": 74.12,
+      "text": "a la que me ha puesto una denuncia falsa,"
+    },
+    {
+      "id": 39,
+      "start": 74.36,
+      "end": 75.56,
+      "text": "inventándose una agresión"
+    },
+    {
+      "id": 40,
+      "start": 75.56,
+      "end": 77.28,
+      "text": "y solidarizándose con ella."
+    },
+    {
+      "id": 41,
+      "start": 77.54,
+      "end": 78.38,
+      "text": "Y la ha hecho Bolaños,"
+    },
+    {
+      "id": 42,
+      "start": 78.46,
+      "end": 79.34,
+      "text": "y lo ha hecho Irene Montero,"
+    },
+    {
+      "id": 43,
+      "start": 79.38,
+      "end": 80.66,
+      "text": "y la ha hecho todo el mundo de la izquierda,"
+    },
+    {
+      "id": 44,
+      "start": 80.66,
+      "end": 81.72,
+      "text": "y ahora resulta que..."
+    }
+  ]
+}
