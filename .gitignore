@@ -1,0 +1,10 @@
+src/summarizer/__pycache__/__init__.cpython-314.pyc
+src/summarizer/__pycache__/llm_client.cpython-314.pyc
+src/summarizer/__pycache__/prompts.cpython-314.pyc
+src/summarizer/__pycache__/structurer.cpython-314.pyc
+workspace/documents/sections.json
+workspace/documents/video.md
+workspace/transcriptions/video.json
+workspace/transcriptions/video.json
+workspace/transcriptions/video.json
+workspace/transcriptions/video.json
