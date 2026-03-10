@@ -5,6 +5,14 @@ src/summarizer/__pycache__/structurer.cpython-314.pyc
 workspace/documents/sections.json
 workspace/documents/video.md
 workspace/transcriptions/video.json
-workspace/transcriptions/video.json
-workspace/transcriptions/video.json
-workspace/transcriptions/video.json
+
+*.pyc
+*.pyc
+
+workspace/frames/sec_00.jpg
+workspace/frames/sec_01.jpg
+workspace/frames/sec_02.jpg
+workspace/frames/sec_03.jpg
+workspace/frames/sec_04.jpg
+workspace/frames/sec_05.jpg
+output/video_documento.docx
