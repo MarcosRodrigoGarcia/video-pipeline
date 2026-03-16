@@ -1,18 +1,6 @@
-src/summarizer/__pycache__/__init__.cpython-314.pyc
-src/summarizer/__pycache__/llm_client.cpython-314.pyc
-src/summarizer/__pycache__/prompts.cpython-314.pyc
-src/summarizer/__pycache__/structurer.cpython-314.pyc
-workspace/documents/sections.json
-workspace/documents/video.md
-workspace/transcriptions/video.json
+input/
+workspace/
+output/
 
 *.pyc
-*.pyc
-
-workspace/frames/sec_00.jpg
-workspace/frames/sec_01.jpg
-workspace/frames/sec_02.jpg
-workspace/frames/sec_03.jpg
-workspace/frames/sec_04.jpg
-workspace/frames/sec_05.jpg
-output/video_documento.docx
+__pycache__/
