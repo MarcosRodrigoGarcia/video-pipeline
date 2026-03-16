@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Pipeline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3e;
+      border-radius: 16px;
+      padding: 48px;
+      width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .drop-zone {
+      border: 2px dashed #3a3d52;
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .drop-zone.drag-over {
+      border-color: #6c63ff;
+      background: #1e1f35;
+    }
+
+    .drop-zone.has-file {
+      border-color: #4caf50;
+      background: #1a2a1e;
+    }
+
+    .drop-zone .icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    .drop-zone p {
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    .drop-zone .filename {
+      margin-top: 8px;
+      color: #4caf50;
+      font-weight: 500;
+      font-size: 0.95rem;
+      word-break: break-all;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: #12141f;
+      border: 1px solid #2a2d3e;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #6c63ff;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover:not(:disabled) { background: #574fd6; }
+    button:disabled { background: #3a3a5c; cursor: not-allowed; }
+
+    .progress-wrap {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .progress-wrap.visible { display: flex; }
+
+    .progress-bar-bg {
+      background: #2a2d3e;
+      border-radius: 8px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #6c63ff;
+      border-radius: 8px;
+      transition: width 0.4s;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .status {
+      font-size: 0.85rem;
+      color: #888;
+      text-align: center;
+    }
+
+    .error {
+      background: #2a1a1a;
+      border: 1px solid #7f2020;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.85rem;
+      color: #f87171;
+      display: none;
+    }
+
+    .error.visible { display: block; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Video → Documento</h1>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">🎬</div>
+      <p>Suelta tu video aquí o haz clic para seleccionarlo</p>
+      <div class="filename" id="filename"></div>
+    </div>
+
+    <input type="file" id="fileInput" accept="video/*" style="display:none" />
+
+    <select id="docType">
+      <option value="meeting_notes">Actas de reunión</option>
+      <option value="summary">Resumen</option>
+      <option value="tutorial">Tutorial</option>
+    </select>
+
+    <button id="submitBtn" disabled>Procesar video</button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="status" id="statusText">Procesando...</div>
+    </div>
+
+    <div class="error" id="errorBox"></div>
+  </div>
+
+  <script>
+    const API_URL = "http://192.168.1.155:8000/process";
+
+    const dropZone   = document.getElementById("dropZone");
+    const fileInput  = document.getElementById("fileInput");
+    const filename   = document.getElementById("filename");
+    const submitBtn  = document.getElementById("submitBtn");
+    const docType    = document.getElementById("docType");
+    const progressWrap = document.getElementById("progressWrap");
+    const progressBar  = document.getElementById("progressBar");
+    const statusText   = document.getElementById("statusText");
+    const errorBox     = document.getElementById("errorBox");
+
+    let selectedFile = null;
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("dragover", e => {
+      e.preventDefault();
+      dropZone.classList.add("drag-over");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("drag-over");
+    });
+
+    dropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropZone.classList.remove("drag-over");
+      const file = e.dataTransfer.files[0];
+      if (file) setFile(file);
+    });
+
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files[0]) setFile(fileInput.files[0]);
+    });
+
+    function setFile(file) {
+      selectedFile = file;
+      filename.textContent = file.name;
+      dropZone.classList.add("has-file");
+      submitBtn.disabled = false;
+      errorBox.classList.remove("visible");
+    }
+
+    submitBtn.addEventListener("click", async () => {
+      if (!selectedFile) return;
+
+      submitBtn.disabled = true;
+      progressWrap.classList.add("visible");
+      progressBar.style.width = "30%";
+      statusText.textContent = "Subiendo video...";
+      errorBox.classList.remove("visible");
+
+      const form = new FormData();
+      form.append("video", selectedFile);
+      form.append("doc_type", docType.value);
+
+      try {
+        progressBar.style.width = "60%";
+        statusText.textContent = "Procesando (puede tardar varios minutos)...";
+
+        const res = await fetch(API_URL, { method: "POST", body: form });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail || `Error ${res.status}`);
+        }
+
+        progressBar.style.width = "100%";
+        statusText.textContent = "Descargando documento...";
+
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = selectedFile.name.replace(/\.[^.]+$/, "") + ".docx";
+        a.click();
+        URL.revokeObjectURL(url);
+
+        statusText.textContent = "Listo.";
+        submitBtn.disabled = false;
+
+      } catch (err) {
+        progressWrap.classList.remove("visible");
+        progressBar.style.width = "0%";
+        errorBox.textContent = err.message;
+        errorBox.classList.add("visible");
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

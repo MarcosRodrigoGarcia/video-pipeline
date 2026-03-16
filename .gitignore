@@ -4,3 +4,6 @@ output/
 
 *.pyc
 __pycache__/
+
+CLAUDE.md
+.claude/
