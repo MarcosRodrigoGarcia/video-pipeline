@@ -53,16 +53,8 @@
       background: #1a2a1e;
     }
 
-    .drop-zone .icon {
-      font-size: 2.5rem;
-      margin-bottom: 12px;
-    }
-
-    .drop-zone p {
-      color: #888;
-      font-size: 0.9rem;
-    }
-
+    .drop-zone .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .drop-zone p { color: #888; font-size: 0.9rem; }
     .drop-zone .filename {
       margin-top: 8px;
       color: #4caf50;
@@ -103,7 +95,6 @@
       flex-direction: column;
       gap: 8px;
     }
-
     .progress-wrap.visible { display: flex; }
 
     .progress-bar-bg {
@@ -118,13 +109,18 @@
       width: 0%;
       background: #6c63ff;
       border-radius: 8px;
-      transition: width 0.4s;
-      animation: pulse 1.5s ease-in-out infinite;
+      transition: width 0.6s;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
+    .progress-bar.indeterminate {
+      width: 40%;
+      animation: slide 1.5s ease-in-out infinite;
+    }
+
+    @keyframes slide {
+      0%   { margin-left: 0%; }
+      50%  { margin-left: 60%; }
+      100% { margin-left: 0%; }
     }
 
     .status {
@@ -142,8 +138,19 @@
       color: #f87171;
       display: none;
     }
-
     .error.visible { display: block; }
+
+    .success {
+      background: #1a2a1e;
+      border: 1px solid #4caf50;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.9rem;
+      color: #4caf50;
+      text-align: center;
+      display: none;
+    }
+    .success.visible { display: block; }
   </style>
 </head>
 <body>
@@ -168,50 +175,41 @@
 
     <div class="progress-wrap" id="progressWrap">
       <div class="progress-bar-bg">
-        <div class="progress-bar" id="progressBar"></div>
+        <div class="progress-bar indeterminate" id="progressBar"></div>
       </div>
       <div class="status" id="statusText">Procesando...</div>
     </div>
 
     <div class="error" id="errorBox"></div>
+    <div class="success" id="successBox">Documento generado. Descargando...</div>
   </div>
 
   <script>
-    const API_URL = "http://192.168.1.155:8000/process";
+    const API = "http://192.168.1.155:8000";
 
-    const dropZone   = document.getElementById("dropZone");
-    const fileInput  = document.getElementById("fileInput");
-    const filename   = document.getElementById("filename");
-    const submitBtn  = document.getElementById("submitBtn");
-    const docType    = document.getElementById("docType");
+    const dropZone    = document.getElementById("dropZone");
+    const fileInput   = document.getElementById("fileInput");
+    const filename    = document.getElementById("filename");
+    const submitBtn   = document.getElementById("submitBtn");
+    const docType     = document.getElementById("docType");
     const progressWrap = document.getElementById("progressWrap");
     const progressBar  = document.getElementById("progressBar");
     const statusText   = document.getElementById("statusText");
     const errorBox     = document.getElementById("errorBox");
+    const successBox   = document.getElementById("successBox");
 
     let selectedFile = null;
+    let pollInterval = null;
 
     dropZone.addEventListener("click", () => fileInput.click());
-
-    dropZone.addEventListener("dragover", e => {
-      e.preventDefault();
-      dropZone.classList.add("drag-over");
-    });
-
-    dropZone.addEventListener("dragleave", () => {
-      dropZone.classList.remove("drag-over");
-    });
-
+    dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
     dropZone.addEventListener("drop", e => {
       e.preventDefault();
       dropZone.classList.remove("drag-over");
-      const file = e.dataTransfer.files[0];
-      if (file) setFile(file);
+      if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
     });
-
-    fileInput.addEventListener("change", () => {
-      if (fileInput.files[0]) setFile(fileInput.files[0]);
-    });
+    fileInput.addEventListener("change", () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
 
     function setFile(file) {
       selectedFile = file;
@@ -219,6 +217,21 @@
       dropZone.classList.add("has-file");
       submitBtn.disabled = false;
       errorBox.classList.remove("visible");
+      successBox.classList.remove("visible");
+    }
+
+    function showError(msg) {
+      progressWrap.classList.remove("visible");
+      errorBox.textContent = msg;
+      errorBox.classList.add("visible");
+      submitBtn.disabled = false;
+      if (pollInterval) clearInterval(pollInterval);
+    }
+
+    function reset() {
+      submitBtn.disabled = false;
+      progressBar.classList.add("indeterminate");
+      if (pollInterval) clearInterval(pollInterval);
     }
 
     submitBtn.addEventListener("click", async () => {
@@ -226,46 +239,57 @@
 
       submitBtn.disabled = true;
       progressWrap.classList.add("visible");
-      progressBar.style.width = "30%";
+      progressBar.classList.add("indeterminate");
       statusText.textContent = "Subiendo video...";
       errorBox.classList.remove("visible");
+      successBox.classList.remove("visible");
 
       const form = new FormData();
       form.append("video", selectedFile);
       form.append("doc_type", docType.value);
 
+      let jobId;
       try {
-        progressBar.style.width = "60%";
-        statusText.textContent = "Procesando (puede tardar varios minutos)...";
-
-        const res = await fetch(API_URL, { method: "POST", body: form });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.detail || `Error ${res.status}`);
-        }
-
-        progressBar.style.width = "100%";
-        statusText.textContent = "Descargando documento...";
-
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement("a");
-        a.href     = url;
-        a.download = selectedFile.name.replace(/\.[^.]+$/, "") + ".docx";
-        a.click();
-        URL.revokeObjectURL(url);
-
-        statusText.textContent = "Listo.";
-        submitBtn.disabled = false;
-
+        const res = await fetch(`${API}/process`, { method: "POST", body: form });
+        if (!res.ok) throw new Error(`Error al subir: ${res.status}`);
+        const data = await res.json();
+        jobId = data.job_id;
       } catch (err) {
-        progressWrap.classList.remove("visible");
-        progressBar.style.width = "0%";
-        errorBox.textContent = err.message;
-        errorBox.classList.add("visible");
-        submitBtn.disabled = false;
+        showError("No se pudo conectar con el servidor: " + err.message);
+        return;
       }
+
+      statusText.textContent = "Procesando (puede tardar varios minutos)...";
+
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${API}/status/${jobId}`);
+          const data = await res.json();
+
+          if (data.status === "done") {
+            clearInterval(pollInterval);
+            progressBar.classList.remove("indeterminate");
+            progressBar.style.width = "100%";
+            statusText.textContent = "Descargando...";
+
+            const link = document.createElement("a");
+            link.href = `${API}/download/${jobId}`;
+            link.download = selectedFile.name.replace(/\.[^.]+$/, "") + ".docx";
+            link.click();
+
+            successBox.classList.add("visible");
+            progressWrap.classList.remove("visible");
+            reset();
+
+          } else if (data.status === "error") {
+            clearInterval(pollInterval);
+            showError("Error en el servidor: " + (data.error || "desconocido"));
+          }
+        } catch (err) {
+          clearInterval(pollInterval);
+          showError("Perdida la conexión con el servidor.");
+        }
+      }, 5000);
     });
   </script>
 </body>

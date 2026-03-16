@@ -1,7 +1,7 @@
-import sys, uuid, shutil
+import sys, uuid, shutil, threading
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -12,9 +12,26 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["POST"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# job_id -> { "status": "pending|running|done|error", "output": path, "error": msg }
+jobs = {}
+
+
+def run_pipeline(job_id: str, input_path: str, doc_type: str, output_name: str):
+    jobs[job_id]["status"] = "running"
+    try:
+        run(input_path, doc_type=doc_type, output_name=output_name)
+        jobs[job_id]["status"] = "done"
+        jobs[job_id]["output"] = f"output/{output_name}.docx"
+    except Exception as e:
+        jobs[job_id]["status"] = "error"
+        jobs[job_id]["error"] = str(e)
+    finally:
+        Path(input_path).unlink(missing_ok=True)
+
 
 @app.post("/process")
 async def process_video(
@@ -32,17 +49,29 @@ async def process_video(
     with open(input_path, "wb") as f:
         shutil.copyfileobj(video.file, f)
 
-    try:
-        run(input_path, doc_type=doc_type, output_name=output_name)
-    except Exception as e:
-        Path(input_path).unlink(missing_ok=True)
-        raise HTTPException(status_code=500, detail=str(e))
+    jobs[job_id] = {"status": "pending", "output": None, "error": None}
 
-    Path(input_path).unlink(missing_ok=True)
+    thread = threading.Thread(target=run_pipeline, args=(job_id, input_path, doc_type, output_name), daemon=True)
+    thread.start()
 
-    output_path = f"output/{output_name}.docx"
+    return JSONResponse({"job_id": job_id})
+
+
+@app.get("/status/{job_id}")
+def get_status(job_id: str):
+    job = jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job no encontrado")
+    return JSONResponse({"status": job["status"], "error": job.get("error")})
+
+
+@app.get("/download/{job_id}")
+def download(job_id: str):
+    job = jobs.get(job_id)
+    if not job or job["status"] != "done":
+        raise HTTPException(status_code=404, detail="Archivo no disponible")
     return FileResponse(
-        output_path,
+        job["output"],
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename="documento.docx",
     )
