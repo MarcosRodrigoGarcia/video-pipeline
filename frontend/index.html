@@ -63,7 +63,7 @@
       word-break: break-all;
     }
 
-    select {
+    select, textarea {
       width: 100%;
       padding: 10px 14px;
       background: #12141f;
@@ -71,7 +71,45 @@
       border-radius: 8px;
       color: #e0e0e0;
       font-size: 0.95rem;
+      font-family: 'Segoe UI', sans-serif;
+      resize: vertical;
+    }
+
+    select { cursor: pointer; }
+
+    textarea::placeholder { color: #555; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #6c63ff;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .checkbox-row span {
+      font-size: 0.95rem;
+      color: #ccc;
+    }
+
+    .doc-options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: opacity 0.2s;
+    }
+
+    .doc-options.hidden {
+      opacity: 0.3;
+      pointer-events: none;
     }
 
     button {
@@ -165,11 +203,20 @@
 
     <input type="file" id="fileInput" accept="video/*" style="display:none" />
 
-    <select id="docType">
-      <option value="meeting_notes">Actas de reunión</option>
-      <option value="summary">Resumen</option>
-      <option value="tutorial">Tutorial</option>
-    </select>
+    <label class="checkbox-row">
+      <input type="checkbox" id="transcribeOnly" />
+      <span>Solo transcripción (devuelve .md)</span>
+    </label>
+
+    <div class="doc-options" id="docOptions">
+      <select id="docType">
+        <option value="meeting_notes">Actas de reunión</option>
+        <option value="summary">Resumen</option>
+        <option value="tutorial">Tutorial</option>
+      </select>
+
+      <textarea id="context" rows="3" placeholder="Contexto (opcional): tema de la reunión, asistentes, proyecto..."></textarea>
+    </div>
 
     <button id="submitBtn" disabled>Procesar video</button>
 
@@ -187,19 +234,29 @@
   <script>
     const API = "http://192.168.1.155:8000";
 
-    const dropZone    = document.getElementById("dropZone");
-    const fileInput   = document.getElementById("fileInput");
-    const filename    = document.getElementById("filename");
-    const submitBtn   = document.getElementById("submitBtn");
-    const docType     = document.getElementById("docType");
-    const progressWrap = document.getElementById("progressWrap");
-    const progressBar  = document.getElementById("progressBar");
-    const statusText   = document.getElementById("statusText");
-    const errorBox     = document.getElementById("errorBox");
-    const successBox   = document.getElementById("successBox");
+    const dropZone      = document.getElementById("dropZone");
+    const fileInput     = document.getElementById("fileInput");
+    const filename      = document.getElementById("filename");
+    const submitBtn     = document.getElementById("submitBtn");
+    const docType       = document.getElementById("docType");
+    const docOptions    = document.getElementById("docOptions");
+    const transcribeOnly = document.getElementById("transcribeOnly");
+    const progressWrap  = document.getElementById("progressWrap");
+    const progressBar   = document.getElementById("progressBar");
+    const statusText    = document.getElementById("statusText");
+    const errorBox      = document.getElementById("errorBox");
+    const successBox    = document.getElementById("successBox");
 
     let selectedFile = null;
     let pollInterval = null;
+
+    transcribeOnly.addEventListener("change", () => {
+      docOptions.classList.toggle("hidden", transcribeOnly.checked);
+      submitBtn.textContent = transcribeOnly.checked ? "Transcribir video" : "Procesar video";
+      successBox.textContent = transcribeOnly.checked
+        ? "Transcripción generada. Descargando..."
+        : "Documento generado. Descargando...";
+    });
 
     dropZone.addEventListener("click", () => fileInput.click());
     dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
@@ -237,6 +294,8 @@
     submitBtn.addEventListener("click", async () => {
       if (!selectedFile) return;
 
+      const isTranscribeOnly = transcribeOnly.checked;
+
       submitBtn.disabled = true;
       progressWrap.classList.add("visible");
       progressBar.classList.add("indeterminate");
@@ -247,6 +306,8 @@
       const form = new FormData();
       form.append("video", selectedFile);
       form.append("doc_type", docType.value);
+      form.append("context", document.getElementById("context").value);
+      form.append("transcribe_only", isTranscribeOnly ? "true" : "false");
 
       let jobId;
       try {
@@ -272,11 +333,15 @@
             progressBar.style.width = "100%";
             statusText.textContent = "Descargando...";
 
+            const stem = selectedFile.name.replace(/\.[^.]+$/, "");
             const link = document.createElement("a");
             link.href = `${API}/download/${jobId}`;
-            link.download = selectedFile.name.replace(/\.[^.]+$/, "") + ".docx";
+            link.download = isTranscribeOnly ? stem + "_transcripcion.md" : stem + ".docx";
             link.click();
 
+            successBox.textContent = isTranscribeOnly
+              ? "Transcripción generada. Descargando..."
+              : "Documento generado. Descargando...";
             successBox.classList.add("visible");
             progressWrap.classList.remove("visible");
             reset();

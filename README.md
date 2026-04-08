@@ -1,112 +1,141 @@
 # Video Pipeline
 
-Automated pipeline that converts a video file into a structured DOCX document.
+Pipeline automatizado que convierte un vídeo en un documento DOCX estructurado, o en una transcripción en Markdown.
 
-## How it works
+## Cómo funciona
 
+**Modo completo (pipeline)**
 ```
 Video (.mp4)
   │
-  ├─ [1] Audio extraction    → workspace/audio/*.wav         (FFmpeg, mono 16kHz)
-  ├─ [2] Transcription       → workspace/transcriptions/*.json (faster-whisper, CUDA)
-  ├─ [3] LLM summarization   → workspace/documents/*.md       (Ollama, llama3.1:8b)
-  ├─ [4] Frame capture       → workspace/frames/*.jpg         (FFmpeg, per section)
-  └─ [5] DOCX generation     → output/*.docx                  (python-docx)
+  ├─ [1] Extracción de audio   → workspace/audio/*.wav              (FFmpeg, mono 16kHz)
+  ├─ [2] Transcripción         → workspace/transcriptions/*.json    (faster-whisper, CUDA)
+  ├─ [3] Resumen con LLM       → workspace/documents/*.md           (Ollama, llama3.1:8b)
+  ├─ [4] Captura de frames     → workspace/frames/*.jpg             (FFmpeg, por sección)
+  └─ [5] Generación de DOCX    → output/*.docx                      (python-docx)
 ```
 
-## Requirements
+**Modo solo transcripción**
+```
+Video (.mp4)
+  │
+  ├─ [1] Extracción de audio   → workspace/audio/*.wav
+  ├─ [2] Transcripción         → workspace/transcriptions/*.json
+  └─     Conversión a Markdown → output/*_transcripcion.md
+```
+
+## Requisitos
 
 - Python 3.10+
-- **FFmpeg** — must be in PATH
-- **CUDA GPU** — transcription runs on `device="cuda"` with `compute_type="float16"`
-- **Ollama** — must be running locally (`ollama serve`), default model `llama3.1:8b`
+- **FFmpeg** — debe estar en el PATH
+- **CUDA GPU** — la transcripción usa `device="cuda"` con `compute_type="float16"`
+- **Ollama** — debe estar corriendo localmente (`ollama serve`), modelo por defecto `llama3.1:8b`
 
-## Installation
+## Instalación
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Pull the Ollama model if you haven't already:
+Descargar el modelo de Ollama si no está disponible:
 
 ```bash
 ollama pull llama3.1:8b
 ```
 
-## Usage
+## Uso por línea de comandos
 
 ```bash
-# Full pipeline — uses input/video.mp4 by default
+# Pipeline completo — usa input/video.mp4 por defecto
 python pipeline.py
 
-# Custom video file
-python pipeline.py input/my_video.mp4
-
-# Custom video + document type
-python pipeline.py input/my_video.mp4 meeting_notes
-python pipeline.py input/my_video.mp4 summary
-python pipeline.py input/my_video.mp4 tutorial
+# Vídeo y tipo de documento personalizados
+python pipeline.py input/mi_video.mp4 meeting_notes
+python pipeline.py input/mi_video.mp4 summary
+python pipeline.py input/mi_video.mp4 tutorial
 ```
 
-Output is saved to `output/<video_name>.docx`.
+El resultado se guarda en `output/<nombre_video>.docx`.
 
-## Document types
+## Interfaz web
 
-| Type | Description |
-|------|-------------|
-| `meeting_notes` | Structured meeting notes with action items (default) |
-| `summary` | Concise summary of the content |
-| `tutorial` | Step-by-step tutorial format |
-
-Defined in `src/summarizer/prompts.py`. Add a new entry to `PROMPT_TEMPLATES` to create a custom type.
-
-## Running individual stages
+El proyecto incluye una interfaz web servida por FastAPI.
 
 ```bash
-python test_transcriber.py   # Steps 1-2: audio extraction + transcription
-python test_summarizer.py    # Step 3: LLM summarization (requires workspace/transcriptions/video.json)
-python test_composer.py      # Steps 4-5: frame capture + DOCX build (requires workspace/documents/)
+cd src/api
+uvicorn server:app --host 0.0.0.0 --port 8000
 ```
 
-## Project structure
+Abre `frontend/index.html` en el navegador (o sírvelo con cualquier servidor estático).
+
+**Opciones disponibles en la UI:**
+- Subida de vídeo por arrastrar y soltar o selector de archivo
+- Selector de tipo de documento (`meeting_notes`, `summary`, `tutorial`)
+- Campo de contexto opcional (tema, asistentes, proyecto...)
+- **Checkbox "Solo transcripción"** — omite el LLM y devuelve directamente un `.md` con la transcripción y timestamps `[MM:SS]`
+
+## Tipos de documento
+
+| Tipo | Descripción |
+|------|-------------|
+| `meeting_notes` | Actas de reunión con puntos clave y acciones (por defecto) |
+| `summary` | Resumen conciso del contenido |
+| `tutorial` | Formato de tutorial paso a paso |
+
+Definidos en `src/summarizer/prompts.py`. Para añadir un tipo nuevo basta con añadir una entrada a `PROMPT_TEMPLATES`.
+
+## Ejecución de etapas individuales
+
+```bash
+python test_transcriber.py   # Pasos 1-2: extracción de audio + transcripción
+python test_summarizer.py    # Paso 3: resumen con LLM (requiere workspace/transcriptions/video.json)
+python test_composer.py      # Pasos 4-5: captura de frames + generación de DOCX (requiere workspace/documents/)
+```
+
+## Estructura del proyecto
 
 ```
-pipeline.py              # Orchestrates all 5 steps end-to-end
+pipeline.py              # Orquesta los 5 pasos completos
+transcribe_only.py       # Subproceso standalone: extracción + transcripción
 src/
+  api/
+    server.py            # API FastAPI: /process, /status, /download
   transcriber/
-    audio_extractor.py   # FFmpeg wrapper → WAV
-    whisper_transcriber.py # faster-whisper → JSON with segments + timestamps
+    audio_extractor.py   # Wrapper FFmpeg → WAV
+    whisper_transcriber.py # faster-whisper → JSON con segmentos y timestamps
   summarizer/
-    llm_client.py        # HTTP client for Ollama API (localhost:11434)
-    prompts.py           # Prompt templates: MEETING_NOTES, SUMMARY, TUTORIAL
-    structurer.py        # Reads transcription JSON, calls LLM, extracts sections
+    llm_client.py        # Cliente HTTP para la API de Ollama (localhost:11434)
+    prompts.py           # Plantillas de prompt: MEETING_NOTES, SUMMARY, TUTORIAL
+    structurer.py        # Lee el JSON de transcripción, llama al LLM, extrae secciones
   composer/
-    frame_extractor.py   # FFmpeg wrapper → JPEG frames per section
-    image_placer.py      # Loads manual images from image_manifest.json
-    doc_builder.py       # Converts Markdown + frames → DOCX via python-docx
-input/                   # Source video files
+    frame_extractor.py   # Wrapper FFmpeg → frames JPEG por sección
+    image_placer.py      # Carga imágenes manuales desde image_manifest.json
+    doc_builder.py       # Convierte Markdown + frames → DOCX via python-docx
+frontend/
+  index.html             # Interfaz web (vanilla JS)
+input/                   # Vídeos de entrada
 workspace/
-  audio/                 # Extracted WAV files
-  transcriptions/        # Whisper output JSON
-  documents/             # Intermediate Markdown + sections JSON
-  frames/                # Captured JPEG frames (sec_00.jpg, sec_01.jpg, ...)
-output/                  # Final DOCX files
-manual_images/           # Optional: image_manifest.json + images to inject
+  audio/                 # Ficheros WAV extraídos
+  transcriptions/        # JSON de salida de Whisper
+  documents/             # Markdown intermedio + JSON de secciones
+  frames/                # Frames JPEG capturados (sec_00.jpg, sec_01.jpg, ...)
+output/                  # DOCX finales y transcripciones .md
+manual_images/           # Opcional: image_manifest.json + imágenes a inyectar
 ```
 
-## Manual image injection
+## Inyección manual de imágenes
 
-You can override auto-captured frames for specific sections by providing your own images.
+Puedes sustituir los frames capturados automáticamente para secciones concretas aportando tus propias imágenes.
 
-Create `manual_images/image_manifest.json`:
+Crea `manual_images/image_manifest.json`:
 
 ```json
 {
   "images": [
-    { "section_id": "sec_01", "file": "manual_images/diagram.png" },
-    { "section_id": "sec_03", "file": "manual_images/chart.png" }
+    { "section_id": "sec_01", "file": "manual_images/diagrama.png" },
+    { "section_id": "sec_03", "file": "manual_images/grafico.png" }
   ]
 }
 ```
 
-Manual images take precedence over auto-captured frames for the same `section_id`.
+Las imágenes manuales tienen prioridad sobre los frames automáticos para el mismo `section_id`.
