@@ -7,3 +7,4 @@ __pycache__/
 
 CLAUDE.md
 .claude/
+src/transcriber/__pycache__/whisper_transcriber.cpython-314.pyc

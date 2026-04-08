@@ -6,7 +6,7 @@ from pathlib import Path
 from faster_whisper import WhisperModel
 
 
-def transcribe(audio_path: str, output_path: str, model_size: str = "large-v3-turbo") -> dict:
+def transcribe(audio_path: str, output_path: str, model_size: str = "large-v3") -> dict:
     """
     Transcribe un fichero de audio y genera JSON con timestamps.
     
@@ -24,7 +24,13 @@ def transcribe(audio_path: str, output_path: str, model_size: str = "large-v3-tu
     model = WhisperModel(model_size, device="cuda", compute_type="float16")
 
     print("Transcribiendo...")
-    segments_gen, info = model.transcribe(audio_path, language=None)
+    segments_gen, info = model.transcribe(
+        audio_path,
+        language="es",
+        beam_size=10,
+        vad_filter=True,
+        vad_parameters={"min_silence_duration_ms": 500},
+    )
 
     segments = []
     full_text_parts = []

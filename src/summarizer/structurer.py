@@ -13,7 +13,8 @@ def summarize(
     output_md_path: str,
     output_sections_path: str,
     doc_type: str = "meeting_notes",
-    model: str = "llama3.1:8b",
+    model: str = "mistral:latest",
+    context: str = "",
 ) -> dict:
     """
     Lee una transcripción JSON y genera un documento Markdown estructurado.
@@ -35,13 +36,18 @@ def summarize(
     full_text = transcription["full_text"]
     segments = transcription["segments"]
 
+    duration_seconds = segments[-1]["end"] if segments else 0
+    duration_minutes = duration_seconds / 60
+    min_words = max(250, round(duration_minutes / 10) * 250)
+
     print(f"Transcripción cargada: {len(segments)} segmentos, {len(full_text)} caracteres")
+    print(f"Duración: {round(duration_minutes)}min → mínimo {min_words} palabras")
     print(f"Tipo de documento: {doc_type}")
     print(f"Modelo: {model}")
     print(f"Enviando a Ollama...")
 
     # Generar prompt y enviar al LLM
-    prompt = get_prompt(doc_type, full_text)
+    prompt = get_prompt(doc_type, full_text, context, min_words=min_words)
     start_time = time.time()
     markdown = query_ollama(prompt, model=model)
     elapsed = round(time.time() - start_time, 1)
